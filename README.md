@@ -25,4 +25,4 @@ IdeaCache is a single‑file, dark‑mode note pad that runs entirely in your br
 IdeaCache is intentionally dependency-free. All styling and logic live inside `ideacache.html`, so no build step is required. If you tweak the file, just refresh the browser tab to see changes.
 
 ## Version Control
-This is version 1.0
+This is version 1.02
