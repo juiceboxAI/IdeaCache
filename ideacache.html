@@ -624,14 +624,14 @@
         const blob = new Blob([note.value], { type: "text/plain;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement("a");
-        const timestamp = new Date()
-          .toISOString()
-          .replace(/[^\d]/g, "")
-          .slice(0, 14);
+        const now = new Date();
+        const dateStamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(
+          now.getDate()
+        ).padStart(2, "0")}`;
         const baseTitle = active?.title ?? "ideacache";
         const slug = baseTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
         anchor.href = url;
-        anchor.download = `${slug || "ideacache"}-${timestamp}.txt`;
+        anchor.download = `${slug || "ideacache"}-${dateStamp}.txt`;
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();
