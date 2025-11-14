@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IdeaCache - Local Dark Notepad</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        background: #05070b;
+        color: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem 3rem;
+      }
+
+      .shell {
+        width: min(100%, 1200px);
+        background: rgba(8, 13, 20, 0.96);
+        border: 1px solid #1c2735;
+        border-radius: 18px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 65px rgba(3, 6, 12, 0.65);
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+      }
+
+      header h1 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.45rem;
+      }
+
+      header p {
+        margin: 0;
+        color: #8ca0bc;
+        font-size: 0.95rem;
+      }
+
+      .note-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .tabs-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        flex: 1;
+      }
+
+      .tab-button {
+        border-radius: 10px;
+        border: 1px solid #1e2b3f;
+        background: #0a101a;
+        color: #c8d5f3;
+        font-size: 0.9rem;
+        padding: 0.35rem 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        max-width: 180px;
+        white-space: nowrap;
+      }
+
+      .tab-button.is-active {
+        border-color: #4074ff;
+        background: #14254a;
+        color: #fff;
+      }
+
+      .tab-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .tab-close {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 999px;
+        font-weight: 600;
+        opacity: 0.6;
+        background: rgba(255, 255, 255, 0.04);
+        color: inherit;
+        border: 1px solid transparent;
+        cursor: pointer;
+      }
+
+      .tab-close:hover {
+        opacity: 1;
+        border-color: rgba(255, 255, 255, 0.25);
+      }
+
+      .add-tab {
+        border-radius: 999px;
+        border: 1px dashed #2d3d55;
+        background: transparent;
+        color: #94a8ca;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+      }
+
+      .add-tab:hover {
+        border-color: #4d78ff;
+        color: #dfe8ff;
+        background: rgba(77, 120, 255, 0.08);
+      }
+
+      .tab-button:focus-visible,
+      .add-tab:focus-visible {
+        outline: 2px solid #4c7dff;
+        outline-offset: 2px;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .control {
+        background: #0f1622;
+        border: 1px solid #1e2b3f;
+        border-radius: 12px;
+        padding: 0.65rem 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-size: 0.95rem;
+        color: #d8dfeb;
+      }
+
+      .control input[type="color"] {
+        border: none;
+        padding: 0;
+        width: 40px;
+        height: 28px;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .control select {
+        background: #0c111a;
+        color: inherit;
+        border: 1px solid #1c2b44;
+        border-radius: 8px;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.95rem;
+        min-width: 140px;
+      }
+
+      #note {
+        width: 100%;
+        height: 60vh;
+        border-radius: 16px;
+        border: 1px solid #1b2638;
+        background: #050a13;
+        color: #f5f5f5;
+        padding: 1rem 1.15rem;
+        resize: vertical;
+        font-size: 1rem;
+        line-height: 1.6;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      #note:focus {
+        border-color: #4583ff;
+        box-shadow: 0 0 0 2px rgba(69, 131, 255, 0.25);
+      }
+
+      .actions {
+        margin-top: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        color: #88a1c4;
+        font-size: 0.9rem;
+      }
+
+      .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .action-buttons button {
+        border-radius: 999px;
+        border: 1px solid #2c415f;
+        background: #10223b;
+        color: #f0f8ff;
+        font-family: inherit;
+        font-size: 0.95rem;
+        padding: 0.5rem 1.5rem;
+        cursor: pointer;
+        transition: transform 0.15s ease, background 0.2s ease;
+      }
+
+      .action-buttons button:hover {
+        transform: translateY(-1px);
+        background: #1a3763;
+      }
+
+      @media (max-width: 640px) {
+        #note {
+          height: 65vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <div>
+          <h1>IdeaCache</h1>
+          <p>Locally stored note pad with quick font + color controls in your browser.</p>
+        </div>
+      </header>
+
+      <section class="note-tabs">
+        <div
+          id="tabsContainer"
+          class="tabs-container"
+          role="tablist"
+          aria-label="IdeaCache notes"
+        ></div>
+        <button id="addTab" type="button" class="add-tab" aria-label="Add note tab">+ New tab</button>
+      </section>
+
+      <section class="controls">
+        <label class="control">
+          Text color
+          <input id="colorPicker" type="color" value="#f5f5f5" aria-label="Choose text color" />
+        </label>
+
+        <label class="control">
+          Background
+          <input
+            id="backgroundPicker"
+            type="color"
+            value="#050a13"
+            aria-label="Choose background color"
+          />
+        </label>
+
+        <label class="control">
+          Font
+          <select id="fontSelect" aria-label="Select font">
+            <option value='"Segoe UI", "Helvetica Neue", Arial, sans-serif'>Sans (Segoe / Arial)</option>
+            <option value='"Times New Roman", Times, serif'>Times New Roman</option>
+            <option value='"Georgia", serif'>Georgia</option>
+            <option value='"Courier New", Courier, monospace'>Courier New</option>
+            <option value='"Lucida Console", Monaco, monospace'>Lucida Console</option>
+          </select>
+        </label>
+
+        <label class="control">
+          Font size
+          <select id="fontSizeSelect" aria-label="Select font size">
+            <option value="0.9rem">Small (14px)</option>
+            <option value="1rem">Default (16px)</option>
+            <option value="1.1rem">Large (18px)</option>
+            <option value="1.25rem">Extra (20px)</option>
+            <option value="1.5rem">Huge (24px)</option>
+          </select>
+        </label>
+      </section>
+
+      <textarea
+        id="note"
+        spellcheck="false"
+        placeholder="Press Tab for indents. Your writing is kept on this device."
+      ></textarea>
+
+      <div class="actions">
+        <span id="status">Saved locally.</span>
+        <div class="action-buttons">
+          <button id="saveNote" type="button">Save as text</button>
+          <button id="clearNote" type="button">Clear note</button>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const STORAGE_KEYS = {
+        notes: "ideacache-notes",
+        activeNote: "ideacache-active-note",
+        legacyContent: "ideacache-content",
+        color: "ideacache-color",
+        font: "ideacache-font",
+        fontSize: "ideacache-font-size",
+        background: "ideacache-background",
+      };
+
+      const note = document.getElementById("note");
+      const colorPicker = document.getElementById("colorPicker");
+      const backgroundPicker = document.getElementById("backgroundPicker");
+      const fontSelect = document.getElementById("fontSelect");
+      const fontSizeSelect = document.getElementById("fontSizeSelect");
+      const status = document.getElementById("status");
+      const clearButton = document.getElementById("clearNote");
+      const saveButton = document.getElementById("saveNote");
+      const tabsContainer = document.getElementById("tabsContainer");
+      const addTabButton = document.getElementById("addTab");
+
+      const savedColor = localStorage.getItem(STORAGE_KEYS.color) ?? "#f5f5f5";
+      const savedFont =
+        localStorage.getItem(STORAGE_KEYS.font) ??
+        '"Segoe UI", "Helvetica Neue", Arial, sans-serif';
+      const savedBackground = localStorage.getItem(STORAGE_KEYS.background) ?? "#050a13";
+      const savedFontSize = localStorage.getItem(STORAGE_KEYS.fontSize) ?? "1rem";
+
+      note.style.color = savedColor;
+      colorPicker.value = savedColor;
+
+      note.style.fontFamily = savedFont;
+      fontSelect.value = savedFont;
+      note.style.backgroundColor = savedBackground;
+      backgroundPicker.value = savedBackground;
+      note.style.fontSize = savedFontSize;
+      fontSizeSelect.value = savedFontSize;
+
+      let notes = [];
+      let activeNoteId = null;
+
+      const markSaved = (msg = "Saved locally.") => {
+        status.textContent = msg;
+      };
+
+      function generateNoteId() {
+        return `note-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+
+      function createNoteEntry(title, content = "") {
+        const trimmedTitle = title && title.trim() ? title.trim() : `Note ${notes.length + 1}`;
+        return {
+          id: generateNoteId(),
+          title: trimmedTitle,
+          content,
+        };
+      }
+
+      function persistNotes() {
+        localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(notes));
+      }
+
+      function persistActiveNote() {
+        if (activeNoteId) {
+          localStorage.setItem(STORAGE_KEYS.activeNote, activeNoteId);
+        } else {
+          localStorage.removeItem(STORAGE_KEYS.activeNote);
+        }
+      }
+
+      function getActiveNote() {
+        return notes.find((entry) => entry.id === activeNoteId);
+      }
+
+      function renameNote(noteId) {
+        const target = notes.find((entry) => entry.id === noteId);
+        if (!target) {
+          return;
+        }
+        const proposed = prompt("Rename note", target.title);
+        if (proposed === null) {
+          return;
+        }
+        const trimmed = proposed.trim();
+        if (!trimmed || trimmed === target.title) {
+          return;
+        }
+        target.title = trimmed;
+        persistNotes();
+        renderTabs();
+        markSaved(`Renamed to ${trimmed}.`);
+      }
+
+      function renderTabs() {
+        tabsContainer.innerHTML = "";
+        notes.forEach((entry) => {
+          const tab = document.createElement("button");
+          tab.type = "button";
+          tab.className = `tab-button${entry.id === activeNoteId ? " is-active" : ""}`;
+          tab.dataset.noteId = entry.id;
+          tab.setAttribute("role", "tab");
+          tab.setAttribute("aria-selected", entry.id === activeNoteId ? "true" : "false");
+          const titleSpan = document.createElement("span");
+          titleSpan.className = "tab-title";
+          titleSpan.textContent = entry.title;
+          tab.appendChild(titleSpan);
+          const closeSpan = document.createElement("span");
+          closeSpan.className = "tab-close";
+          closeSpan.setAttribute("aria-label", `Delete ${entry.title}`);
+          closeSpan.innerHTML = "&times;";
+          closeSpan.addEventListener("click", (event) => {
+            event.stopPropagation();
+            removeNote(entry.id);
+          });
+          closeSpan.addEventListener("dblclick", (event) => {
+            event.stopPropagation();
+          });
+          tab.appendChild(closeSpan);
+          tab.addEventListener("click", () => {
+            if (entry.id !== activeNoteId) {
+              setActiveNote(entry.id);
+            }
+          });
+          tab.addEventListener("dblclick", () => renameNote(entry.id));
+          tabsContainer.appendChild(tab);
+        });
+      }
+
+      function setActiveNote(noteId, options = {}) {
+        const target = notes.find((entry) => entry.id === noteId);
+        if (!target) {
+          return;
+        }
+        activeNoteId = target.id;
+        note.value = target.content ?? "";
+        persistActiveNote();
+        renderTabs();
+        if (!options.silent) {
+          markSaved(`Switched to ${target.title}.`);
+        }
+      }
+
+      function removeNote(noteId) {
+        if (!notes.length) {
+          return;
+        }
+        const index = notes.findIndex((entry) => entry.id === noteId);
+        if (index === -1) {
+          return;
+        }
+        const target = notes[index];
+        if (!confirm(`Delete tab "${target.title}"? This removes its note permanently.`)) {
+          return;
+        }
+        notes.splice(index, 1);
+        let nextActiveId = activeNoteId;
+        if (!notes.length) {
+          const fallback = createNoteEntry("Note 1");
+          notes.push(fallback);
+          nextActiveId = fallback.id;
+        } else if (target.id === activeNoteId) {
+          const fallbackIndex = index >= notes.length ? notes.length - 1 : index;
+          nextActiveId = notes[fallbackIndex].id;
+        }
+        persistNotes();
+        if (target.id === activeNoteId) {
+          setActiveNote(nextActiveId, { silent: true });
+        } else {
+          renderTabs();
+          persistActiveNote();
+        }
+        markSaved(`Deleted ${target.title}.`);
+      }
+
+      function persistContent(message) {
+        const current = getActiveNote();
+        if (!current) {
+          return;
+        }
+        current.content = note.value;
+        persistNotes();
+        markSaved(message ?? "Saved locally.");
+      }
+
+      function addNewNote() {
+        const newNote = createNoteEntry(`Note ${notes.length + 1}`);
+        notes.push(newNote);
+        persistNotes();
+        setActiveNote(newNote.id, { silent: true });
+        markSaved("New tab created.");
+      }
+
+      function loadNotes() {
+        const storedNotesRaw = localStorage.getItem(STORAGE_KEYS.notes);
+        if (storedNotesRaw) {
+          try {
+            const parsed = JSON.parse(storedNotesRaw);
+            if (Array.isArray(parsed)) {
+              notes = parsed
+                .filter((entry) => entry && typeof entry.id === "string")
+                .map((entry, index) => ({
+                  id: entry.id,
+                  title:
+                    typeof entry.title === "string" && entry.title.trim()
+                      ? entry.title.trim()
+                      : `Note ${index + 1}`,
+                  content: typeof entry.content === "string" ? entry.content : "",
+                }));
+            }
+          } catch (error) {
+            notes = [];
+          }
+        }
+        if (!notes.length) {
+          const legacyContent = localStorage.getItem(STORAGE_KEYS.legacyContent);
+          const initialNote = createNoteEntry("Note 1", legacyContent ?? "");
+          notes = [initialNote];
+          if (legacyContent !== null) {
+            localStorage.removeItem(STORAGE_KEYS.legacyContent);
+          }
+        }
+        activeNoteId = localStorage.getItem(STORAGE_KEYS.activeNote);
+        if (!notes.some((entry) => entry.id === activeNoteId)) {
+          activeNoteId = notes[0]?.id ?? null;
+        }
+        persistNotes();
+        persistActiveNote();
+      }
+
+      loadNotes();
+      if (activeNoteId) {
+        setActiveNote(activeNoteId, { silent: true });
+      } else {
+        renderTabs();
+        note.value = "";
+      }
+      const initialNote = getActiveNote();
+
+      colorPicker.addEventListener("input", () => {
+        note.style.color = colorPicker.value;
+        localStorage.setItem(STORAGE_KEYS.color, colorPicker.value);
+        markSaved("Color updated.");
+      });
+
+      backgroundPicker.addEventListener("input", () => {
+        note.style.backgroundColor = backgroundPicker.value;
+        localStorage.setItem(STORAGE_KEYS.background, backgroundPicker.value);
+        markSaved("Background updated.");
+      });
+
+      fontSelect.addEventListener("change", () => {
+        note.style.fontFamily = fontSelect.value;
+        localStorage.setItem(STORAGE_KEYS.font, fontSelect.value);
+        markSaved("Font updated.");
+      });
+
+      fontSizeSelect.addEventListener("change", () => {
+        note.style.fontSize = fontSizeSelect.value;
+        localStorage.setItem(STORAGE_KEYS.fontSize, fontSizeSelect.value);
+        markSaved("Font size updated.");
+      });
+
+      note.addEventListener("input", () => {
+        persistContent();
+      });
+
+      // Allow tab characters inside the textarea instead of focusing the next control.
+      const insertTextAtCursor = (text) => {
+        const { selectionStart, selectionEnd, value } = note;
+        note.value = `${value.slice(0, selectionStart)}${text}${value.slice(selectionEnd)}`;
+        note.selectionStart = note.selectionEnd = selectionStart + text.length;
+        persistContent();
+      };
+
+      note.addEventListener("keydown", (event) => {
+        if (event.key === "Tab") {
+          event.preventDefault();
+          insertTextAtCursor("\t");
+        }
+      });
+
+      note.addEventListener("paste", (event) => {
+        const text = event.clipboardData?.getData("text/plain");
+        if (text !== undefined) {
+          event.preventDefault();
+          insertTextAtCursor(text);
+          markSaved("Pasted without formatting.");
+        }
+      });
+
+      addTabButton.addEventListener("click", () => {
+        addNewNote();
+      });
+
+      clearButton.addEventListener("click", () => {
+        if (
+          !note.value.trim() ||
+          confirm("Clear this tab? This removes the saved copy for the active note.")
+        ) {
+          note.value = "";
+          persistContent("Note cleared.");
+        }
+      });
+
+      saveButton.addEventListener("click", () => {
+        const active = getActiveNote();
+        const blob = new Blob([note.value], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        const timestamp = new Date()
+          .toISOString()
+          .replace(/[^\d]/g, "")
+          .slice(0, 14);
+        const baseTitle = active?.title ?? "ideacache";
+        const slug = baseTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        anchor.href = url;
+        anchor.download = `${slug || "ideacache"}-${timestamp}.txt`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        persistContent("Downloaded as text.");
+      });
+
+      const initialMessage = initialNote?.content
+        ? "Loaded from this device."
+        : "Ready for typing.";
+      markSaved(initialMessage);
+    </script>
+  </body>
+</html>
